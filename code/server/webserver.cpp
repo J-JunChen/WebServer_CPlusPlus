@@ -70,34 +70,6 @@ void WebServer::InitEventMode_(int trigMode){
     HttpConn::isET = (connEvent_ & EPOLLET);
 }
 
-void WebServer::Start() {
-    int timeMS = -1;  /* epoll wait timeout == -1 无事件将阻塞 */
-    if(!isClose_) 
-        LOG_INFO("========== Server start ==========");
-    while(!isClose_) {
-        if(timeoutMS_ > 0) {
-            timeMS = timer_->GetNextTick();
-        }
-        int eventCnt = epoller_->Wait(timeMS);
-        for(int i = 0; i < eventCnt; i++) {
-            /* 处理事件 */
-            int fd = epoller_->GetEventFd(i);
-            uint32_t events = epoller_->GetEvents(i);
-            if(fd == listenFd_) {
-                DealListen_();
-            }
-            else if(events & (EPOLLRDHUP | EPOLLHUP | EPOLLERR)) {
-                assert(users_.count(fd) > 0);
-                CloseConn_(&users_[fd])
-            }
-            else if(events & EPOLLIN){
-                assert(users_.count(fd) > 0);
-                DealRead_(&users_[fd]);
-            }
-        }
-    }
-}
-
 /* Create listenFd */
 bool WebServer::InitSocket_() {
     int ret;
@@ -200,7 +172,7 @@ bool WebServer::InitSocket_() {
         return false;
     }
 
-    ret = epoller_ -> AddFd(listenFd_, listenEvent_ | EPOLLIN);
+    ret = epoller_->AddFd(listenFd_, listenEvent_ | EPOLLIN);
     if(ret == 0) { // Note: this is ret == 0
         LOG_ERROR("Add listen error!");
         close(listenFd_);
@@ -215,6 +187,47 @@ bool WebServer::InitSocket_() {
     LOG_INFO("Server port:%d", port_);
     return true;
 }
+
+
+void WebServer::Start() {
+    int timeMS = -1;  /* epoll wait timeout == -1 无事件将阻塞 */
+    if(!isClose_) 
+        LOG_INFO("========== Server start ==========");
+    while(!isClose_) {
+        if(timeoutMS_ > 0) {
+            timeMS = timer_->GetNextTick();
+        }
+        // 9.3.2 epoll_wait 函数
+        // 将所有就绪的事件从内核事件表 epollfd 中复制到 events 数组。
+        // number 都是索引 epoll 返回的就绪文件描述符
+        int eventCnt = epoller_->Wait(timeMS);
+        
+        for(int i = 0; i < eventCnt; i++) { // 仅遍历就绪的 number 个文件描述符
+            /* 处理事件 */
+            int fd = epoller_->GetEventFd(i); // sockfd 肯定就绪，直接处理
+            uint32_t events = epoller_->GetEvents(i);
+            if(fd == listenFd_) { //处理新到的客户连接
+                DealListen_();
+            }
+            else if(events & (EPOLLRDHUP | EPOLLHUP | EPOLLERR)) {
+/*
+    EPOLLRDHUP: Stream socket peer closed connection, or shut down writing
+              half of connection.
+    EPOLLHUP: Hang up happened on the associated file descriptor.
+    EPOLLERR: Error condition happened on the associated file
+              descriptor. 
+*/
+                assert(users_.count(fd) > 0);
+                CloseConn_(&users_[fd])
+            }
+            else if(events & EPOLLIN){
+                assert(users_.count(fd) > 0);
+                DealRead_(&users_[fd]);
+            }
+        }
+    }
+}
+
 
 int WebServer::SetFdNonblock(int fd) {
     assert(fd > 0);
@@ -254,6 +267,7 @@ void WebServer::DealListen_() {
     struct sockaddr_in addr;
     socklen_t len = sizeof(addr);
     do{
+        // 5.5 接受连接
         int fd = accept(listenFd_, (struct sockaddr *)&addr, &len);
         if(fd <= 0) { return;}
         else if(HttpConn::userCount >= MAX_FD){

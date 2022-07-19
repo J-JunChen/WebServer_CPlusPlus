@@ -10,11 +10,13 @@ class Log
 {
 private:
     static const int LOG_NAME_LEN = 256;
-    
+    static const int LOG_NAME_LEN = 256;
+    static const int MAX_LINES = 50000;
 
     const char* path_;
     const char* suffix_;
 
+    int MAX_LINES_;
     int lineCount_;
     bool isAsync_;
 
@@ -34,6 +36,7 @@ private:
     Log();
     virtual ~Log(); //为什么要用到虚的析构函数？Log() 有被继承吗？
     void AsyncWrite_();
+    void AppendLogLevelTitle_(int level);
     
 public:
 
@@ -42,8 +45,13 @@ public:
                 int maxQueueCapacity = 1024);
     static Log* Instance();
     static void FlushLogThread();
-
+    
+    void write(int level, const char *format,...);
     void flush();
+
+    int GetLevel();
+    void SetLevel(int level);
+    bool IsOpen() { return isOpen_; }
 
 
 };
@@ -55,8 +63,10 @@ public:
 #define LOG_BASE(level, format, ...)\
     do{\
         Log* log = Log::Instance();\
-        if (Log->IsOpen() && ) 
-
+        if (log->IsOpen() && log->GetLevel() <= level) {\
+            log->write(level, format, ##__VA_ARGS__); \
+            log->flush();\
+        }\
     } while(0);
 
 #define LOG_DEBUG(format, ...) LOG_BASE(0, format,  ##__VA_ARGS__);
