@@ -1,7 +1,16 @@
 #include "sqlconnpool.h"
 using namespace std;
 
-static SqlConnPool *Instance(){
+SqlConnPool::SqlConnPool(/* args */){
+    useCount_ = 0;
+    freeCount_ = 0;
+}
+
+SqlConnPool::~SqlConnPool(){
+    ClosePool();
+}
+
+SqlConnPool* SqlConnPool::Instance(){
     static SqlConnPool connPool; // local static variable
     return &connPool; 
 };
@@ -32,4 +41,41 @@ void SqlConnPool::Init(const char* host, int port,
         The value argument specifies the initial value for the semaphore.
     */
     sem_init(&semId_, 0, MAX_CONN_);
+}
+
+MYSQL* SqlConnPool::GetConn() {
+    MYSQL *sql = nullptr;
+    if(connQue_.empty()){
+        LOG_WARN("SqlConnPool busy!");
+        return nullptr;
+    }
+    sem_wait(&semId_);
+    {
+        std::lock_guard<mutex> locker(mtx_);
+        sql = connQue_.front();
+        connQue_.pop();
+    }
+    return sql;
+}
+
+void SqlConnPool::FreeConn(MYSQL* sql) {
+    assert(sql);
+    std::lock_guard<mutex> locker(mtx_);
+    connQue_.push(sql);
+    sem_post(&semId_);
+}
+
+void SqlConnPool::ClosePool() {
+    std::lock_guard<mutex> locker(mtx_);
+    while(!connQue_.empty()) {
+        auto item = connQue_.front();
+        connQue_.pop();
+        mysql_close(item);
+    }
+    mysql_library_end();        
+}
+
+int SqlConnPool::GetFreeConnCount() {
+    std::lock_guard<mutex> locker(mtx_);
+    return connQue_.size();
 }

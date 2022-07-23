@@ -13,6 +13,7 @@ HttpConn::HttpConn(/* args */){
 }
 
 HttpConn::~HttpConn(){
+    Close(); 
 }
 
 void HttpConn::init(int sockFd, const sockaddr_in& addr){

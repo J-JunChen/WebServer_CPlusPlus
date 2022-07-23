@@ -125,7 +125,7 @@ int HeapTimer::GetNextTick() {
     tick();
     size_t res = -1;
     if(!heap_.empty()) {
-        res = std::chrono::duration_cast<MS>(heap_.front().expires - Clock::now()).count();
+        res = std::chrono::duration_cast<MS>(heap_.front().expires - Clock::now()).count(); // MS： milliseconds; count() 表示多少次MS。
         if(res < 0) { res = 0; }
     }
     return res;

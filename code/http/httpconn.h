@@ -43,6 +43,12 @@ public:
     */
     static std::atmoic<int> userCount; 
 
+    /*
+        当用于类声明时，即静态成员变量和静态成员函数，static表示所有类对象共享这些数据和函数，而非每个类对象独有
+
+        static变量在类的声明中不占用内存，必须在.cpp文件中定义类静态变量以分配内存
+    */
+
 };
 
 #endif

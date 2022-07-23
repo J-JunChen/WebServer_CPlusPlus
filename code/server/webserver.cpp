@@ -6,12 +6,13 @@ WebServer::WebServer(
         int sqlPort, const char* sqlUser, const char* sqlPwd, const char* dbName, /* Mysql配置 */
         int connPoolNum, int threadNum, /* 连接池数量，线程池数量 */
         bool openLog, int logLevel, int logQueSize /* 日志开关，日志等级，日志异步队列容量  */
-    ): port_(port), openLinger_(OptLinger), timeoutMS_(timeoutMS), isClose_(false)
+    ): port_(port), openLinger_(OptLinger), timeoutMS_(timeoutMS), isClose_(false),
+    timer_(new HeapTimer()), threadpool_(new ThreadPool(threadNum)), epoller_(new Epoller())
     {
         srcDir_ = getcwd(nullptr, 256); //getcwd from unistd.h
         assert(srcDir_);
         strncat(srcDir_, "/resources/", 16); // Append characters from string
-        HttpConn::userCount = 0;
+        HttpConn::userCount = 0; // userCount is static, 所以只能
         HttpConn::srcDir = srcDir_;
         SqlConnPool::Instance()->Init('localhost', sqlPort, sqlUser, sqlPwd, dbName, connPoolNum);
 
@@ -282,6 +283,9 @@ void WebServer::DealListen_() {
 void WebServer::DealRead_(HttpConn* client) {
     assert(client);
     ExtentTime_(client);
+    /*
+        std::bind
+    */
     threadpool_->AddTask(std::bind(&WebServer::OnRead_, this, client));
 }
 

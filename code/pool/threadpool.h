@@ -17,6 +17,10 @@ private:
         std::condition_variable cond;
         bool isClosed;
         std::queue<std::function<void()>> tasks;
+        /*
+            std::function
+        */
+
     };
     std::shared_ptr<Pool> pool_;
 
@@ -75,6 +79,9 @@ template<class F>
 void ThreadPool::AddTask(F&& task) {
     {
         std::lock_guard<std::mutex> locker(pool_->mtx);
+        /*
+            std::forward
+        */
         pool_->tasks.emplace(std::forward<F>(task));
     }
     pool_->cond.notify_one();
