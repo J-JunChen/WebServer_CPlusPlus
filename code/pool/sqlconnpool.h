@@ -4,6 +4,7 @@
 #include <assert.h>
 #include <mysql/mysql.h>
 #include <semaphore.h>
+#include <queue>
 
 #include "../log/log.h"
 
@@ -14,6 +15,8 @@ private:
     ~SqlConnPool();
 
     int MAX_CONN_;
+    int useCount_;
+    int freeCount_;
 
     std:queue<MYSQL *> connQue_;
     std::mutex mtx_; // 互斥量
@@ -25,16 +28,14 @@ public:
     void Init(const char* host, int port,
             const char* user, const char* pwd,
             const* dbName, int connSize);
+    void ClosePool();
     
+    MYSQL *GetConn();
+    void FreeConn(MYSQL * conn);
+    int GetFreeConnCount();
 };
 
-SqlConnPool::SqlConnPool(/* args */)
-{
-}
 
-SqlConnPool::~SqlConnPool()
-{
-}
 
 
 
