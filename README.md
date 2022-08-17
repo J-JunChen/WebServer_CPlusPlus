@@ -1,4 +1,13 @@
-# WebServer_CPlusPlus
+## Lightweight Web Server
+### Summary:
+A simple, fast, multithreaded web server platform implemented using C++11.
+
+###	Project Highlights:
+- Combined I/O multiplexing technology epoll and thread pool to achieve a high concurrency server model that improved the performance of the system.
+- Created timer based on min heap algorithm to close the dormant client http connection periodically that reduced memory footprint by 50%.
+- Built the asynchronous logging system using singleton pattern and customed blocking queue to record the server running status, which helped server runs twice as fast as the synchronous one.
+
+---
 
 涉及技术：C++ + MySQL + I/O 复用技术 + Reactor
 
