@@ -11,3 +11,29 @@
 - 利用单例模式与自定义阻塞队列实现异步日志系统，记录服务器运行状态，解决了同步日志系统造成阻塞等待的问题，增强了服务器的并发能力。
 - 使用标准库容器 vector 封装 char 数据类型，实现自动增长的读写缓冲区。 
 - 利用 Webbench 对服务器进行压力测试，实现上万的并发连接。
+
+
+## 项目启动：
+
+需要先配置好对应的数据库
+
+```
+// 建立yourdb库
+create database yourdb;
+
+// 创建user表
+USE yourdb;
+CREATE TABLE user(
+    username char(50) NULL,
+    password char(50) NULL
+)ENGINE=InnoDB;
+
+// 添加数据
+INSERT INTO user(username, password) VALUES('name', 'password');
+```
+
+启动服务器
+```
+make
+./bin/server
+```

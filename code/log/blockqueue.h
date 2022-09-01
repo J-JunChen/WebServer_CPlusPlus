@@ -57,6 +57,7 @@ public:
 
 };
 
+// 区别于 threadpool 把构造函数不能放在类外，template不实例化的话等于没声明
 template<class T>
 BlockDeque<T>::BlockDeque(size_t MaxCapacity): capacity_(MaxCapacity)
 {

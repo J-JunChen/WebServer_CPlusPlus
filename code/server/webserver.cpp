@@ -155,7 +155,7 @@ bool WebServer::InitSocket_() {
         return false;
     }
 
-    // 5.3 命名 socket
+    // 5.3 命名 socket，绑定socket和它的地址
     // 成功时返回 0；失败时返回 -1
     ret = bind(listenFd_, (struct sockaddr *)&addr, sizeof(addr));
     if(ret < 0){
@@ -219,11 +219,17 @@ void WebServer::Start() {
               descriptor. 
 */
                 assert(users_.count(fd) > 0);
-                CloseConn_(&users_[fd])
+                CloseConn_(&users_[fd]);
             }
             else if(events & EPOLLIN){
                 assert(users_.count(fd) > 0);
                 DealRead_(&users_[fd]);
+            }
+            else if(events & EPOLLOUT) {
+                assert(users_.count(fd) > 0);
+                DealWrite_(&users_[fd]);
+            } else {
+                LOG_ERROR("Unexpected event");
             }
         }
     }
@@ -292,8 +298,8 @@ void WebServer::DealRead_(HttpConn* client) {
 void WebServer::DealWrite_(HttpConn* client) {
     assert(client);
     ExtentTime_(client);
-    threadpool_->AddTask(std::bind(&WebServer::OnWrite_, this, client)); // std::bind 解释 https://www.cnblogs.com/xusd-null/p/3698969.html
-
+    threadpool_->AddTask(std::bind(&WebServer::OnWrite_, this, client)); 
+    // std::bind 解释 https://www.cnblogs.com/xusd-null/p/3698969.html
 }
 
 void WebServer::ExtentTime_(HttpConn* client) {

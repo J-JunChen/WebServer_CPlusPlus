@@ -26,6 +26,10 @@ public:
     ~HttpConn();
 
     void init(int sockFd, const sockaddr_in& addr);
+    
+    ssize_t read(int* saveErrno);
+
+    ssize_t write(int* saveErrno);
 
     void Close();
 
