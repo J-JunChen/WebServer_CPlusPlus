@@ -49,6 +49,7 @@ int Epoller::Wait(int timeoutMs) {
 int epoll_wait(int epfd, struct epoll_event *events,
                       int maxevents, int timeout);
         The epoll_wait() system call waits for events on the epoll instance referred to by the file descriptor 'epfd'.  The buffer pointed to by 'events' is used to return information from the ready list about file descriptors in the interest list that have some events available.
+The "timeout" parameter specifies the maximum wait time in milliseconds (-1 == infinite).
     */
 }
 

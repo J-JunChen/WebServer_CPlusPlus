@@ -196,7 +196,7 @@ void WebServer::Start() {
         LOG_INFO("========== Server start ==========");
     while(!isClose_) {
         if(timeoutMS_ > 0) {
-            timeMS = timer_->GetNextTick();
+            timeMS = timer_->GetNextTick(); // 最开始是timer里面没有连接，timeMs 还是 = -1，表示没有事件；如果timer已经有连接，那么 timeMs 不为0，而是下一次超时时间，则下面语句 epoller_->Wait(timeMS) 只会阻塞 timeMS
         }
         // 9.3.2 epoll_wait 函数
         // 将所有就绪的事件从内核事件表 epollfd 中复制到 events 数组。
