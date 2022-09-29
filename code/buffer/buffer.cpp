@@ -2,10 +2,10 @@
 
 Buffer::Buffer(int initBuffSize) : buffer_(initBuffSize), readPos_(0), writePos_(0) {}
 
-size_t Buffer::ReadableBytes() const {
+size_t Buffer::ReadableBytes() const { // 可读长度 = 写下标-读下标就是
     return writePos_ - readPos_;
 }
-size_t Buffer::WritableBytes() const {
+size_t Buffer::WritableBytes() const { // 可写长度 = vector大小-写下标
     return buffer_.size() - writePos_;
 }
 
@@ -13,7 +13,7 @@ size_t Buffer::PrependableBytes() const {
     return readPos_;
 }
 
-const char* Buffer::Peek() const {
+const char* Buffer::Peek() const { // 返回下标为可读部分的最开始的下标的地址
     return BeginPtr_() + readPos_;
 }
 
@@ -27,18 +27,18 @@ void Buffer::RetrieveUntil(const char* end) {
     Retrieve(end - Peek());
 }
 
-void Buffer::RetrieveAll() {
+void Buffer::RetrieveAll() {  
     /*
         The bzero() function erases the data in the n bytes of the memory starting at the location pointed to by s, by writing zeros (bytes containing '\0') to that area.
     */
-    bzero(&buffer_[0], buffer_.size());
+    bzero(&buffer_[0], buffer_.size()); // buffer 清零，读写下标重置为0
     readPos_ = 0;
     writePos_ = 0;
 }
 
 
 std::string Buffer::RetrieveAllToStr() {
-    std::string str(Peek(), ReadableBytes());
+    std::string str(Peek(), ReadableBytes());  // 先把缓冲区可读的部分全部取出，然后返回一个 string，然后再通过调用 RetrieveAll() 把 buffer 清空.
     RetrieveAll();
     return str;
 }
@@ -85,7 +85,7 @@ void Buffer::EnsureWriteable(size_t len) {
     assert(WritableBytes() >= len);
 }
 
-ssize_t Buffer::ReadFd(int fd, int* saveErrno) {
+ssize_t Buffer::ReadFd(int fd, int* saveErrno) { // 从内核缓冲区读到用户缓冲区
     char buff[65535];
     struct iovec iov[2];
     const size_t writable = WritableBytes();
@@ -109,7 +109,7 @@ ssize_t Buffer::ReadFd(int fd, int* saveErrno) {
     return len;
 }
 
-ssize_t Buffer::WriteFd(int fd, int* saveErrno) {
+ssize_t Buffer::WriteFd(int fd, int* saveErrno) { // 从用户buffer写到内核缓冲区中
     size_t readSize = ReadableBytes();
     ssize_t len = write(fd, Peek(), readSize);
     if(len < 0) {
@@ -128,9 +128,9 @@ const char* Buffer::BeginPtr_() const {
     return &*buffer_.begin();
 }
 
-void Buffer::MakeSpace_(size_t len) {
+void Buffer::MakeSpace_(size_t len) { 
     if(WritableBytes() + PrependableBytes() < len) {
-        buffer_.resize(writePos_ + len + 1);
+        buffer_.resize(writePos_ + len + 1); // 可写部分不够就需要扩容
     } 
     else {
         size_t readable = ReadableBytes();
